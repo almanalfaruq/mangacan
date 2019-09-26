@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:mangacan/inherited_manga.dart';
 import 'package:mangacan/helper.dart';
 import 'package:mangacan/manga.dart';
+import 'package:mangacan/search_manga.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 void main() => runApp(MyApp());
@@ -8,12 +10,15 @@ void main() => runApp(MyApp());
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Mangacan',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+    return InheritedManga(
+      helper: Helper(),
+      child: MaterialApp(
+        title: 'Mangacan',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        home: MyHomePage(title: 'Mangacan - Manga Reader'),
       ),
-      home: MyHomePage(title: 'Mangacan - Manga Reader'),
     );
   }
 }
@@ -28,19 +33,32 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  Helper _helper = Helper();
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
+        body: NestedScrollView(
+      headerSliverBuilder: (buildContext, headerSliverBuilder) {
+        return <Widget>[
+          SliverAppBar(
+            floating: true,
+            snap: true,
+            title: Text('Mangacan - Manga Reader'),
+            actions: <Widget>[
+              IconButton(
+                icon: Icon(Icons.search),
+                onPressed: () {
+                  showSearch(context: context, delegate: SearchManga());
+                },
+              )
+            ],
+          ),
+        ];
+      },
       body: FutureBuilder<List<Manga>>(
         initialData: List<Manga>(),
-        future: _helper.getAllManga(),
+        future: InheritedManga.of(context).helper.getAllManga(),
         builder: (BuildContext context, AsyncSnapshot<List<Manga>> snapshot) {
-          switch(snapshot.connectionState) {
+          switch (snapshot.connectionState) {
             case ConnectionState.active:
             case ConnectionState.waiting:
               return Center(
@@ -71,8 +89,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 },
               );
           }
+          return Column();
         },
       ),
-    );
+    ));
   }
 }

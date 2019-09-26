@@ -4,16 +4,17 @@ import 'package:html/dom.dart';
 import 'package:html/parser.dart';
 
 class Helper {
-
   Client _client;
+  List<Manga> _manga = [];
 
   Helper() {
     this._client = Client();
   }
 
   Future<List<Manga>> getAllManga() async {
-    List<Manga> allManga = [];
-    final response = await _client.get('http://www.mangacanblog.com/daftar-komik-manga-bahasa-indonesia.html');
+    if (_manga.length != 0) return _manga;
+    final response = await _client.get(
+        'http://www.mangacanblog.com/daftar-komik-manga-bahasa-indonesia.html');
     final document = parse(response.body);
     final mangasPerTitle = document.getElementsByClassName('blix');
     for (Element mangaPerTitle in mangasPerTitle) {
@@ -23,9 +24,18 @@ class Helper {
         final title = aTag.text;
         final url = aTag.attributes['href'];
         final manga = Manga(title: title, url: url);
-        allManga.add(manga);
+        _manga.add(manga);
       }
     }
-    return allManga;
+    return _manga;
+  }
+
+  Future<List<Manga>> getMangaByQuery(String query) async {
+    if (_manga.length == 0) await getAllManga();
+    if (query == null || query?.isEmpty) return _manga;
+    return _manga
+        .where(
+            (manga) => manga.title.toLowerCase().contains(query.toLowerCase()))
+        .toList();
   }
 }
